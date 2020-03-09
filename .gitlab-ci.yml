@@ -1,0 +1,47 @@
+# using latest node and npm
+image: node:latest
+
+# disabling ssl verification
+variables:
+  GIT_SSL_NO_VERIFY: "1"
+
+# This folder is cached between builds to avoid reinstalling every dependencies
+cache:
+  paths:
+    - node_modules/
+
+# check if the project can compile
+build:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+# store artifacts for 1 week
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - handiquiz/
+
+# test the merge request to validate code implementation
+test:
+  stage: test
+  script:
+    - npm run lint
+    - npm run test
+
+# Deploy to production only for master (production)
+deploy frontend:
+  image: ubuntu
+  stage: deploy
+  only:
+    refs:
+        - master
+  script:
+    - apt-get update -y && apt-get install openssh-client rsync -y
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" >> ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - echo "NODE_ENV=production\nDOMAIN=$PRODUCTION_SERVER_IP" >> .env
+    - rsync -rav --delete ./ "$PRODUCTION_SERVER_USERNAME"@"$PRODUCTION_SERVER_IP":~/www
