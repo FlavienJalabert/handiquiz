@@ -22,20 +22,20 @@ Vue.config.productionTip = false;
 const router = new VueRouter({ mode: 'history', routes });
 const baseURL = process.env.NODE_ENV === 'production' ? 'http://localhost:8443' : 'http://localhost:4000';
 const vuexStorage = new VuexPersist({
-  key: 'sourcelink',
-  asyncStorage: true,
   storage: localForage,
+  asyncStorage: true,
+  supportCircular: true,
 });
 const store = new Vuex.Store({
   plugins: [vuexStorage.plugin],
   state: {
-    token: null,
-    tokenType: null,
-    userId: null,
-    user: null,
+    token: undefined,
+    tokenType: undefined,
+    userId: undefined,
+    user: undefined,
     userRole: ['user'],
-    expirationDate: null,
-    userName: null,
+    expirationDate: undefined,
+    userName: undefined,
   },
   getters: {
     /* Partially Implemented not for production use */
@@ -54,13 +54,13 @@ const store = new Vuex.Store({
       state.userName = userData.userName;
     },
     logout(state) {
-      state.token = null;
-      state.tokenType = null;
-      state.userId = null;
-      state.expirationDate = null;
-      state.user = null;
+      state.token = undefined;
+      state.tokenType = undefined;
+      state.userId = undefined;
+      state.expirationDate = undefined;
+      state.user = undefined;
       state.userRole = ['user'];
-      state.userName = null;
+      state.userName = undefined;
     },
   },
   actions: {
@@ -175,6 +175,12 @@ router.beforeEach((to, from, next) => {
   // so redirect to same page if exist or home page
   return next({ path: from.path || '/' });
 });
+
+const waitForStorageToBeReady = async (to, from, next) => {
+  await store.restored;
+  next();
+};
+router.beforeEach(waitForStorageToBeReady);
 
 // eslint-disable-next-line no-unused-vars
 const app = new Vue(Vue.util.extend({ router, store }, App)).$mount('#app');

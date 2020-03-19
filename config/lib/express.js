@@ -103,7 +103,7 @@ module.exports.initMiddleware = (app) => {
   app.use((req, res, next) => {
     if (req.originalUrl === '/user/login' || req.originalUrl.startsWith('/uploads')) {
       next();
-    } else if (req.token) {
+    } else if (req.token !== 'undefined') {
       if (jwt.verify(req.token, process.env.JWT_PASS_PHRASE)) {
         next();
       } else {

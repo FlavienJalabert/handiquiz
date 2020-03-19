@@ -284,6 +284,11 @@
         </md-card>
       </form>
     </slot>
+    <md-snackbar :md-active.sync="errorSnackBar">
+      <md-snackbar-content>
+        {{ this.error }}
+      </md-snackbar-content>
+    </md-snackbar>
   </div>
 </template>
 <script>
@@ -297,6 +302,7 @@ export default {
   },
   data() {
     return {
+      referenceId: '_id',
       enabled: true,
       step: 'quizCreation',
       stepError: [null, null, null, null, null, null],
@@ -312,6 +318,8 @@ export default {
         images: [],
         quizImages: [],
       },
+      error: null,
+      errorSnackBar: false,
       tags: [
         'nature',
         'Animals',
@@ -352,7 +360,12 @@ export default {
   },
   methods: {
     post() {
-      this.$store.dispatch('post', { requestUrl: '/quiz/create', payload: this.finalQuiz });
+      this.$store.dispatch('post', { requestUrl: '/quiz/create', payload: this.finalQuiz }).then((res) => {
+        this.$router.push({ name: 'edit', params: { id: res.data[this.referenceId] } });
+      }).catch((err) => {
+        this.errorSnackBar = true;
+        this.error = err;
+      });
     },
     validateResponse(id) {
       this.finalQuiz.quiz[0].correctAnswer = id;
